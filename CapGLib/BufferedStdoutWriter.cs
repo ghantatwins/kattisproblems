@@ -5,7 +5,29 @@ using System.Text;
 
 namespace CapGLib
 {
-    public class TestScanner : Tokenizer
+    public abstract class ConsoleWorker
+    {
+        protected readonly IScanner Scanner;
+
+        protected ConsoleWorker(IScanner scanner)
+        {
+            Scanner = scanner;
+        }
+
+        public abstract void DoWork();
+
+    }
+    public interface IScanner
+    {
+        int NextInt();
+        long NextLong();
+        float NextFloat();
+        double NextDouble();
+        bool HasNext();
+        string NextString();
+    }
+
+    public class TestScanner : Tokenizer, IScanner
     {
 
         private Tokenizer _tempTokenizer;
@@ -93,9 +115,10 @@ namespace CapGLib
 
             return double.Parse(Ensure());
         }
-        public override string NextLine()
+
+        public string NextString()
         {
-            return GetCurrent();
+            return Ensure();
         }
     }
 
@@ -163,7 +186,7 @@ namespace CapGLib
         }
     }
 
-    public class Scanner : Tokenizer
+    public class Scanner : Tokenizer, IScanner
     {
 
         public int NextInt()
@@ -186,6 +209,10 @@ namespace CapGLib
             return double.Parse(Next());
         }
 
+        public string NextString()
+        {
+            return Next();
+        }
     }
 
     public class NoMoreTokensException : Exception
