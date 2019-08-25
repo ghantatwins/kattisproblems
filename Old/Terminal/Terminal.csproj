@@ -54,7 +54,7 @@
       <Name>CapGLib</Name>
     </ProjectReference>
     <ProjectReference Include="..\RussianDolls\RussianDolls.csproj">
-      <Project>{83408F4D-6322-4559-9D7A-6411BC9E0C6A}</Project>
+      <Project>{83408f4d-6322-4559-9d7a-6411bc9e0c6a}</Project>
       <Name>RussianDolls</Name>
     </ProjectReference>
   </ItemGroup>

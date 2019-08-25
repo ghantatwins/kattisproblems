@@ -3,11 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27428.2015
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CapGLib", "CapGLib\CapGLib.csproj", "{CACBE7A5-7AE3-4B58-9A05-DB75A712F4F2}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Old", "Old", "{422A9C14-8ED4-43B2-BA5B-87B625A34668}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RussianDolls", "RussianDolls\RussianDolls.csproj", "{83408F4D-6322-4559-9D7A-6411BC9E0C6A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CapGLib", "Old\CapGLib\CapGLib.csproj", "{CACBE7A5-7AE3-4B58-9A05-DB75A712F4F2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Terminal", "Terminal\Terminal.csproj", "{82B2A5D6-6BDC-4009-8D1A-BD21E3558626}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RussianDolls", "Old\RussianDolls\RussianDolls.csproj", "{83408F4D-6322-4559-9D7A-6411BC9E0C6A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Terminal", "Old\Terminal\Terminal.csproj", "{82B2A5D6-6BDC-4009-8D1A-BD21E3558626}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,6 +32,11 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{CACBE7A5-7AE3-4B58-9A05-DB75A712F4F2} = {422A9C14-8ED4-43B2-BA5B-87B625A34668}
+		{83408F4D-6322-4559-9D7A-6411BC9E0C6A} = {422A9C14-8ED4-43B2-BA5B-87B625A34668}
+		{82B2A5D6-6BDC-4009-8D1A-BD21E3558626} = {422A9C14-8ED4-43B2-BA5B-87B625A34668}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E00C3715-708A-47A0-A7EA-2D65086C8F68}
