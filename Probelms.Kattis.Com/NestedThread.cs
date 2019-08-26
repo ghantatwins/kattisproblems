@@ -25,7 +25,7 @@ namespace Probelms.Kattis.Com
                     nestedItems.Add(item);
                 }
                 nestedItems.Sort(Factory.Comparer);
-                NestedSolution nested= new NestedSolution(nestedItems,Factory);
+                NodeBuilder nested= new NodeBuilder(nestedItems,Factory);
                 IEnumerable<List<int>> indexes = nested.GetTopChains(_collections);
                 if (!first) Printer.WriteLine("");
                 first = false;
@@ -65,95 +65,170 @@ namespace Probelms.Kattis.Com
 
     }
 
-    public class NestedSolution
+    public class NodeBuilder
     {
-        
         private readonly List<IItem> _nestedItems;
         private readonly IFactory<IItem> _factory;
+        private readonly NodeEqualityComparer _comparer;
+        private readonly List<Node> _nodes;
 
-        public NestedSolution( List<IItem> nestedItems, IFactory<IItem> factory)
+        public NodeBuilder(List<IItem> nestedItems, IFactory<IItem> factory)
         {
-            
             _nestedItems = nestedItems;
             _factory = factory;
+            _comparer = new NodeEqualityComparer();
+              _nodes  = new List<Node>();
         }
 
         public IEnumerable<List<int>> GetTopChains(int collections)
         {
-           
-           SortedDictionary<IItem,List<int>> solutions= new SortedDictionary<IItem, List<int>>(_factory.Comparer);
-            for (int i = _nestedItems.Count- 1; i >= 0; i--)
+            List<List<int>> indexes = new List<List<int>>();
+            if (_nodes.Count == 0) BuildNodes();
+            foreach (var node in _nodes)
             {
-                var subList = new List<int>();
-                for (int j = i + 1; j  < _nestedItems.Count; j++)
+                if (node.Depth.Count == _factory.TotalItems)
+                {
+                    List<int> index= GetIndexes(node,3);
+                    indexes.Add(index);
+                }
+            }
+
+            return indexes;
+        }
+
+        private List<int> GetIndexes(Node node,int size)
+        {
+           List<int> indexs= new List<int>();
+            var temp = node;
+            int currSize = size;
+            while (temp != null)
+            {
+               int index= _nestedItems.IndexOf(temp.Item);
+                if(index!=-1) indexs.Add(index);
+                currSize--;
+                temp = temp.Childs.SingleOrDefault(x => x.Depth.Count == currSize);
+            }
+
+            return indexs;
+        }
+
+        private void BuildNodes()
+        {
+            for (int i = 0; i < _factory.TotalItems; i++)
+            {
+                for (int j = 0; j < _factory.TotalItems; j++)
                 {
                     if (_nestedItems[i].Constraint(_nestedItems[j]))
                     {
-                        subList.Add(j);
-                    }
-                }
-
-                foreach (var subItem in subList)
-                {
-                    if (!solutions.ContainsKey(_nestedItems[subItem]))
-                    {
-                        solutions[_nestedItems[subItem]] = new List<int>();
-                        solutions[_nestedItems[subItem]].Add(subItem);
-                    }
-                    if (!solutions.ContainsKey(_nestedItems[i]))
-                    {
-                        solutions[_nestedItems[i]] = new List<int>();
-                        solutions[_nestedItems[i]].Add(subItem);
-                    }
-                    //else
-                    {
-                        if (!solutions[_nestedItems[i]].Contains(subItem))
+                        var searchNode = new Node(_nestedItems[i], _factory.EqualityComparer);
+                        Node node1 = _nodes.SingleOrDefault(x => _comparer.Equals(x, searchNode));
+                        if (node1 == null)
                         {
-                            solutions[_nestedItems[i]].Add(subItem);
-                        }
-                            
-                    }
-                }
-                
-                
-            }
-            return GetRelevant(solutions,collections);
-        }
-
-        private IEnumerable<List<int>> GetRelevant(IDictionary<IItem, List<int>> solutionsValues, int collections)
-        {
-            var expected= new List<List<int>>(solutionsValues.Values);
-            expected.Sort(new ListComparer());
-            for (int i = 0; i < expected.Count; i++)
-            {
-                if (expected[i].Count > _factory.TotalItems)
-                {
-                    for (int j = i + 1; j < expected.Count; j++)
-                    {
-                        var intersect = expected[i].Except(expected[j]).ToList();
-                        foreach (var intersected in intersect.ToList())
-                        {
-                            expected[i].Remove(intersected);
+                            node1 = searchNode;
+                            _nodes.Add(node1);
                         }
 
+                        searchNode = new Node(_nestedItems[j], _factory.EqualityComparer);
+                        Node node2 = _nodes.SingleOrDefault(x => _comparer.Equals(x, searchNode));
+                        if (node2 == null)
+                        {
+                            node2 = searchNode;
+                            _nodes.Add(node2);
+                        }
+
+                        if (node1 != null && node2 != null)
+                            node1.Childs.Add(node2);
                     }
                 }
-                
             }
-            return expected.Take(collections);
         }
     }
 
-    internal class ListComparer : IComparer<List<int>>
+    public class NodeEqualityComparer : IEqualityComparer<Node>
     {
-        public int Compare(List<int> x, List<int> y)
+        public bool Equals(Node x, Node y)
         {
-            if (x == null && y == null) return 0;
-            if (x == y) return 0;
-            if (x == null) return 1;
-            if (y == null) return -1;
-            return y.Count - x.Count;
+            if (x == null & y == null) return true;
+            if (x == y) return true;
+            if (x != y) return false;
+            return x.Equals(y);
+        }
 
+        public int GetHashCode(Node obj)
+        {
+            return obj.GetHashCode();
+        }
+    }
+
+    public class Node : IEquatable<Node>
+    {
+        public IItem Item { get; }
+
+        private readonly IEqualityComparer<IItem> _comparer;
+
+
+        public IList<Node> Childs { get; private set; }
+
+        
+
+        public Node(IItem item, IEqualityComparer<IItem> comparer)
+        {
+            Item = item;
+
+            _comparer = comparer;
+
+            Childs = new List<Node>();
+        }
+
+        public List<Node> Depth
+        {
+            get
+            {
+                List<Node> path = new List<Node>();
+                foreach (Node node in Childs)
+                {
+                    List<Node> tmp = node.Depth;
+                    if (tmp.Count > path.Count)
+                        path = tmp;
+                }
+                path.Insert(0, this);
+                return path;
+            }
+        }
+
+        public override string ToString()
+        {
+            return Item.ItemName;
+        }
+
+        public bool Equals(Node other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return _comparer.Equals(Item, other.Item);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((Node) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return (Item != null ? Item.GetHashCode() : 0);
+        }
+
+        public static bool operator ==(Node left, Node right)
+        {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(Node left, Node right)
+        {
+            return !Equals(left, right);
         }
     }
 }
