@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Probelms.Kattis.Com.Core
+﻿namespace Probelms.Kattis.Com.Core
 {
     public interface IScanner
     {
@@ -10,14 +8,5 @@ namespace Probelms.Kattis.Com.Core
         double NextDouble();
         bool HasNext();
         string NextString();
-    }
-    public interface IFactory<T>
-    where T : IItem
-    {
-        int TotalItems { get; }
-        T Create();
-        IEqualityComparer<T> EqualityComparer { get; }
-        IComparer<T> Comparer { get; }
-        void Reset();
     }
 }
