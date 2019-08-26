@@ -20,5 +20,14 @@ namespace Probelms.Kattis.Com.Core
         {
 
         }
+
+        public override void WriteLine(String message)
+        {
+            Console.WriteLine(message);
+        }
+        public override void Write(String message)
+        {
+            Console.WriteLine(message);
+        }
     }
 }

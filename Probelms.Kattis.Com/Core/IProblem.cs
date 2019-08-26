@@ -3,9 +3,6 @@
     public interface IProblem<T>
     where T : IItem
     {
-       IFactory<T> Factory { get; }
-       IPrinter Printer { get; }
-
-        void Solve();
+       void Solve(IFactory<T> dollFactory);
     }
 }

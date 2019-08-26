@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Probelms.Kattis.Com.Core;
 
-namespace Probelms.Kattis.Com.Core
+namespace RussianDolls.Kattis.Com
 {
     public class TestScanner : Tokenizer, IScanner
     {
@@ -21,6 +22,7 @@ namespace Probelms.Kattis.Com.Core
             if (_tempTokenizer == null)
             {
                 //using (Stream s = GetStream(text))
+                if(!string.IsNullOrEmpty(text))
                 _tempTokenizer = new Tokenizer(GetStream(text));
 
             }
@@ -64,6 +66,10 @@ namespace Probelms.Kattis.Com.Core
             if (_tempTokenizer == null)
             {
                 token = GetCurrent();
+                if (token == null)
+                {
+                    return null;
+                }
                 Setup(token);
                 token = _tempTokenizer.Next();
             }

@@ -18,5 +18,6 @@ namespace Probelms.Kattis.Com.Core
         T Create();
         IEqualityComparer<T> EqualityComparer { get; }
         IComparer<T> Comparer { get; }
+        void Reset();
     }
 }

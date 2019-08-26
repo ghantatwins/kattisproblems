@@ -48,6 +48,11 @@ namespace RussianDolls.Kattis.Com
             get { return new DollComparer(); }
         }
 
+        public void Reset()
+        {
+            _totalTimes = -999999999;
+        }
+
         public static IScanner TestCase
         {
             get

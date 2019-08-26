@@ -9,26 +9,28 @@ namespace Probelms.Kattis.Com
     public class NestedThread : IProblem<IItem>
     {
         private readonly int _collections;
-        public IFactory<IItem> Factory { get; }
+        private bool _first;
+
         public IPrinter Printer { get; }
-        public void Solve()
+        public void Solve(IFactory<IItem> factory)
         {
-            bool first = true;
+            
+            
             while (true)
             {
+                int items = 2 * factory.TotalItems;
                 List<IItem> nestedItems = new List<IItem>();
-                int items = 2*Factory.TotalItems;
                 if (items == 0) break;
                 for (int i = 0; i < items; i++)
                 {
-                    var item = Factory.Create();
+                    var item = factory.Create();
                     nestedItems.Add(item);
                 }
-                nestedItems.Sort(Factory.Comparer);
-                NodeBuilder nested= new NodeBuilder(nestedItems,Factory);
+                nestedItems.Sort(factory.Comparer);
+                NodeBuilder nested = new NodeBuilder(nestedItems, factory);
                 IEnumerable<List<int>> indexes = nested.GetTopChains(_collections);
-                if (!first) Printer.WriteLine("");
-                first = false;
+                if (!_first) Printer.WriteLine("");
+                _first = false;
                 int loop = 0;
                 foreach (var set in indexes)
                 {
@@ -44,23 +46,26 @@ namespace Probelms.Kattis.Com
                     }
 
                 }
+                factory.Reset();
             }
+
+            
         }
 
-        public NestedThread(int collections, IFactory<IItem> factory, IPrinter printer)
+        public NestedThread(int collections, IPrinter printer)
         {
             _collections = collections;
 
-            Factory = factory;
             Printer = printer;
+            _first = true;
         }
 
-        public NestedThread(int collections, IFactory<IItem> threadFactory) : this(collections, threadFactory, new TerminalWriter())
+        public NestedThread(int collections) : this(collections, new TerminalWriter())
         {
 
         }
 
-        
+
 
 
     }
@@ -71,76 +76,158 @@ namespace Probelms.Kattis.Com
         private readonly IFactory<IItem> _factory;
         private readonly NodeEqualityComparer _comparer;
         private readonly List<Node> _nodes;
+        private WeightedComparer _weightedComparer;
+        private NodeComparer _nodeComparer;
+        private readonly NodeItemComparer _nodeItemComparer;
 
         public NodeBuilder(List<IItem> nestedItems, IFactory<IItem> factory)
         {
             _nestedItems = nestedItems;
             _factory = factory;
             _comparer = new NodeEqualityComparer();
-              _nodes  = new List<Node>();
+            _nodeComparer = new NodeComparer();
+            _nodes = new List<Node>();
+            _weightedComparer=new WeightedComparer();
+            _nodeItemComparer = new NodeItemComparer(_factory.Comparer);
         }
 
         public IEnumerable<List<int>> GetTopChains(int collections)
         {
-            List<List<int>> indexes = new List<List<int>>();
-            if (_nodes.Count == 0) BuildNodes();
+            if (_nodes.Count == 0) BuildNodes(collections);
+            
+            var collection= GetIndexes().ToList();
+            collection.Sort(_weightedComparer);
+            return collection.Take(collections);
+        }
+
+        public class WeightedComparer : IComparer<List<int>>
+        {
+            public int Compare(List<int> x, List<int> y)
+            {
+                if (x == y) return 0;
+                if (x == null) return 1;
+                if (y == null) return -1;
+                return y.Count - x.Count;
+            }
+        }
+
+        private IEnumerable<List<int>> GetIndexes()
+        {
+            Dictionary<IItem,List<int>> indexers = new Dictionary<IItem, List<int>>();
+            _nodes.Sort(_nodeItemComparer);
             foreach (var node in _nodes)
             {
-                if (node.Depth.Count == _factory.TotalItems)
+                List< int> indexs=new List<int>();
+                int currSize = node.ChainSize;
+                var temp = node;
+                while (temp != null)
                 {
-                    List<int> index= GetIndexes(node,3);
-                    indexes.Add(index);
+                    int index = _nestedItems.IndexOf(temp.Item);
+                    if (index != -1) indexs.Add(index);
+                    currSize--;
+                    var temps = new List<Node>(temp.Childs.Where(x => x.ChainSize == currSize));
+                    temps.Sort(_nodeComparer);
+                    Dictionary<Node,List<int>> subIndexes = new Dictionary<Node, List<int>>();
+                    foreach (var subTemp in temps)
+                    {
+                        
+                        var key = subTemp.Item;
+                        if (indexers.ContainsKey(key))
+                        {
+                            subIndexes.Add(subTemp,indexers[key]);
+                        }
+                    }
+
+                    var pair = subIndexes.SingleOrDefault(x => x.Value.Count == subIndexes.Max(y => y.Value.Count));
+                    if (pair.Key != null)
+                    {
+                        indexs.AddRange(pair.Value);
+                        indexers.Remove(pair.Key.Item);
+                    }
+                    temp = pair.Key;
+                }
+                indexs = indexs.Distinct().ToList();
+                indexers.Add(node.Item,indexs);
+            }
+            
+
+            return indexers.Values;
+        }
+
+        private void BuildNodes(int collections)
+        {
+            int total = _factory.TotalItems;
+            for (int i = collections * _factory.TotalItems - 1; i >= 0; i--)
+            {
+                var searchNode = new Node(_nestedItems[i], _factory.EqualityComparer);
+                Node node1 = _nodes.SingleOrDefault(x => _comparer.Equals(x, searchNode));
+                if (node1 == null)
+                {
+                    node1 = searchNode;
+                    node1.ChainSize = total;
+                    _nodes.Add(node1);
                 }
             }
-
-            return indexes;
-        }
-
-        private List<int> GetIndexes(Node node,int size)
-        {
-           List<int> indexs= new List<int>();
-            var temp = node;
-            int currSize = size;
-            while (temp != null)
+            for (int i = 0; i < collections * _factory.TotalItems; i++)
             {
-               int index= _nestedItems.IndexOf(temp.Item);
-                if(index!=-1) indexs.Add(index);
-                currSize--;
-                temp = temp.Childs.SingleOrDefault(x => x.Depth.Count == currSize);
-            }
+                var searchNode = new Node(_nestedItems[i], _factory.EqualityComparer);
+                Node node1 = _nodes.SingleOrDefault(x => _comparer.Equals(x, searchNode));
 
-            return indexs;
-        }
-
-        private void BuildNodes()
-        {
-            for (int i = 0; i < _factory.TotalItems; i++)
-            {
-                for (int j = 0; j < _factory.TotalItems; j++)
+                for (int j = 0; j < collections * _factory.TotalItems; j++)
                 {
+                    searchNode = new Node(_nestedItems[j], _factory.EqualityComparer);
+                    Node node2 = _nodes.SingleOrDefault(x => _comparer.Equals(x, searchNode));
+                    if (node2 == null)
+                    {
+                        node2 = searchNode;
+                        _nodes.Add(node2);
+                    }
                     if (_nestedItems[i].Constraint(_nestedItems[j]))
                     {
-                        var searchNode = new Node(_nestedItems[i], _factory.EqualityComparer);
-                        Node node1 = _nodes.SingleOrDefault(x => _comparer.Equals(x, searchNode));
-                        if (node1 == null)
+                        if (node1 != null)
                         {
-                            node1 = searchNode;
-                            _nodes.Add(node1);
+                            int temp = node1.ChainSize - 1;
+                            node2.ChainSize = temp;
+                            if (!node1.Childs.Contains(node2, new NodeEqualityComparer()))
+                                node1.Childs.Add(node2);
                         }
 
-                        searchNode = new Node(_nestedItems[j], _factory.EqualityComparer);
-                        Node node2 = _nodes.SingleOrDefault(x => _comparer.Equals(x, searchNode));
-                        if (node2 == null)
-                        {
-                            node2 = searchNode;
-                            _nodes.Add(node2);
-                        }
 
-                        if (node1 != null && node2 != null)
-                            node1.Childs.Add(node2);
                     }
+
                 }
             }
+        }
+    }
+
+    public class NodeItemComparer:IComparer<Node>
+    {
+        private readonly IComparer<IItem> _factoryComparer;
+
+        public NodeItemComparer(IComparer<IItem> factoryComparer)
+        {
+            _factoryComparer = factoryComparer;
+        }
+
+        public int Compare(Node x, Node y)
+        {
+            if (x == null & y == null) return 0;
+            if (x == y) return 0;
+            if (x == null) return 1;
+            if (y == null) return -1;
+            return _factoryComparer.Compare(y.Item, x.Item);
+        }
+    }
+
+    public class NodeComparer:IComparer<Node>
+    {
+        public int Compare(Node x, Node y)
+        {
+            if (x == null & y == null) return 0;
+            if (x == y) return 0;
+            if (x == null) return 1;
+            if (y == null) return -1;
+            return y.ChainSize - x.ChainSize;
         }
     }
 
@@ -165,11 +252,12 @@ namespace Probelms.Kattis.Com
         public IItem Item { get; }
 
         private readonly IEqualityComparer<IItem> _comparer;
+        public int ChainSize { get; set; }
 
 
         public IList<Node> Childs { get; private set; }
 
-        
+
 
         public Node(IItem item, IEqualityComparer<IItem> comparer)
         {
@@ -177,24 +265,11 @@ namespace Probelms.Kattis.Com
 
             _comparer = comparer;
 
+
             Childs = new List<Node>();
         }
 
-        public List<Node> Depth
-        {
-            get
-            {
-                List<Node> path = new List<Node>();
-                foreach (Node node in Childs)
-                {
-                    List<Node> tmp = node.Depth;
-                    if (tmp.Count > path.Count)
-                        path = tmp;
-                }
-                path.Insert(0, this);
-                return path;
-            }
-        }
+        
 
         public override string ToString()
         {
@@ -213,7 +288,7 @@ namespace Probelms.Kattis.Com
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
-            return Equals((Node) obj);
+            return Equals((Node)obj);
         }
 
         public override int GetHashCode()
