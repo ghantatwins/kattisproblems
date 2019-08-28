@@ -20,48 +20,64 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 
-namespace Probelms.Kattis.Com.Core {
-  /// <summary>
-  /// Represents the base class for all basic item types.
-  /// </summary>
-  [Item("Item", "Base class for all HeuristicLab items.")]
-  public abstract class Item : IItem {
-    public virtual string ItemName {
-      get { return ItemAttribute.GetName(this.GetType()); }
-    }
-    public virtual string ItemDescription {
-      get { return ItemAttribute.GetDescription(this.GetType()); }
-    }
-    public Version ItemVersion {
-      get { return ItemAttribute.GetVersion(this.GetType()); }
-    }
-    
-   protected Item() { }
-
-    public object Clone() {
-      return Clone(new Cloner());
-    }
-    public abstract IDeepCloneable Clone(Cloner cloner);
-
+namespace Probelms.Kattis.Com.Core
+{
     /// <summary>
-    /// Gets the string representation of the current instance.
+    /// Represents the base class for all basic item types.
     /// </summary>
-    /// <returns>The type name of the current instance.</returns>
-    public override string ToString() {
-      return ItemName;
+    [Item("Item", "Base class for all HeuristicLab items.")]
+    public abstract class Item : IItem
+    {
+
+
+        public virtual string ItemName
+        {
+            get { return ItemAttribute.GetName(this.GetType()); }
+        }
+        public virtual string ItemDescription
+        {
+            get { return ItemAttribute.GetDescription(this.GetType()); }
+        }
+        public Version ItemVersion
+        {
+            get { return ItemAttribute.GetVersion(this.GetType()); }
+        }
+
+        public IList<IItem> Children { get; }
+
+        protected Item()
+        {
+            Children = new List<IItem>();
+        }
+
+        public object Clone()
+        {
+            return Clone(new Cloner());
+        }
+        public abstract IDeepCloneable Clone(Cloner cloner);
+
+        /// <summary>
+        /// Gets the string representation of the current instance.
+        /// </summary>
+        /// <returns>The type name of the current instance.</returns>
+        public override string ToString()
+        {
+            return ItemName;
+        }
+
+
+        public event EventHandler ToStringChanged;
+        public abstract bool Constraint(IItem nestedItem);
+
+
+        protected virtual void OnToStringChanged()
+        {
+            EventHandler handler = ToStringChanged;
+            if (handler != null) handler(this, EventArgs.Empty);
+        }
+        public abstract void Print(IPrinter printer);
+
     }
-
-   
-    public event EventHandler ToStringChanged;
-      public abstract bool Constraint(IItem nestedItem);
-     
-
-      protected virtual void OnToStringChanged() {
-      EventHandler handler = ToStringChanged;
-      if (handler != null) handler(this, EventArgs.Empty);
-    }
-      public abstract void Print(IPrinter printer);
-
-  }
 }

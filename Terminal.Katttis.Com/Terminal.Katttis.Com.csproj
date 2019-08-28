@@ -5,9 +5,4 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Probelms.Kattis.Com\Probelms.Kattis.Com.csproj" />
-    <ProjectReference Include="..\RussianDolls.Kattis.Com\RussianDolls.Kattis.Com.csproj" />
-  </ItemGroup>
-
 </Project>

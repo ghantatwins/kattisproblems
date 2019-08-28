@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Probelms.Kattis.Com.Nested;
 
-namespace Probelms.Kattis.Com.Core
+namespace Probelms.Kattis.Com.Nested
 {
 public class TopoSortEnumerator<TItem, TKey> : IEnumerator<TItem>
 {
