@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-
+using System.Linq;
 
 
 namespace Terminal.Katttis.Com
@@ -250,7 +250,8 @@ namespace Terminal.Katttis.Com
         public class Problem : ConsoleWorker
         {
             private DollComparer _comparer;
-            private int _numDolls;
+            private DollEqualityComparer _equalityComparer;
+
 
             public class DollComparer : IComparer<Doll>
             {
@@ -349,6 +350,7 @@ namespace Terminal.Katttis.Com
             public Problem(IScanner scanner) : base(scanner)
             {
                 _comparer = new DollComparer();
+                _equalityComparer = new DollEqualityComparer();
 
             }
 
@@ -359,11 +361,11 @@ namespace Terminal.Katttis.Com
                 while (true)
                 {
                     List<Doll> nestedDolls = new List<Doll>();
-                    _numDolls = Scanner.NextInt();
-                    if (_numDolls == 0) break;
+                    int numDolls = Scanner.NextInt();
+                    if (numDolls == 0) break;
 
 
-                    for (int i = 0; i < 2 * _numDolls; i++)
+                    for (int i = 0; i < 2 * numDolls; i++)
                     {
                         int j = 0;
                         var H = Scanner.NextInt();
@@ -389,7 +391,7 @@ namespace Terminal.Katttis.Com
                     }
 
 
-                    IEnumerable<IEnumerable<Doll>> sets = LongestChains(nestedDolls, _numDolls, _comparer);
+                    IEnumerable<IEnumerable<Doll>> sets = LongestChains(nestedDolls, numDolls);
                     if (!first) Console.WriteLine("");
                     first = false;
                     int loop = 0;
@@ -413,18 +415,18 @@ namespace Terminal.Katttis.Com
 
 
 
-            IEnumerable<IEnumerable<Doll>> LongestChains(List<Doll> dolls, int numDolls, IComparer<Doll> dollComparer)
+            IEnumerable<IEnumerable<Doll>> LongestChains(List<Doll> dolls, int numDolls)
             {
-                return Sort(dolls, new DollEqualityComparer(), true);
+                return Sort(dolls, numDolls);
 
             }
 
-            private IEnumerable<List<Doll>> ReverseSplit(IList<Doll> sorted, int collection, IComparer<Doll> dollComparer)
+            private IEnumerable<List<Doll>> ReverseSplit(IList<Doll> sorted, int collection)
             {
                 var reverse = new List<Doll>(sorted);
                 for (int i = 0; i < reverse.Count; i += collection)
                 {
-                    yield return SubListSorted(collection, reverse, i, dollComparer);
+                    yield return SubListSorted(collection, reverse, i, _comparer);
                 }
             }
 
@@ -437,61 +439,65 @@ namespace Terminal.Katttis.Com
             }
 
 
-            IList<List<Doll>> Sort(IEnumerable<Doll> source, IEqualityComparer<Doll> comparer = null, bool ignoreCycles = false)
+            IList<List<Doll>> Sort(IEnumerable<Doll> source, int numDolls)
             {
 
-                var visited = new Dictionary<Doll, List<Doll>>(comparer);
+                var visited = new Dictionary<Doll, List<Doll>>(_equalityComparer);
                 List<List<Doll>> dolls = new List<List<Doll>>();
                 foreach (var item in source)
                 {
-                    Visit(item, ref visited, ignoreCycles);
-                    if (visited[item].Count>_numDolls)
+                    Visit(item, ref visited, numDolls);
+                    if (visited[item].Count == numDolls)
                     {
-                        while (visited[item].Count > _numDolls)
-                            visited[item].Remove(visited[item][visited[item].Count - 1]);
-                            
-                        dolls.Add(visited[item]);
+                        if (dolls.Count == 0)
+                            dolls.Add(new List<Doll>(visited[item]));
+                        else
+                        {
+                            foreach (var doll in dolls)
+                            {
+                                if (!doll.Intersect(visited[item]).Any())
+                                {
+                                    dolls.Add(new List<Doll>(visited[item]));
+
+                                    break;
+
+                                }
+
+                            }
+                        }
                     }
-                    
-                    visited = new Dictionary<Doll, List<Doll>>();
+
+                    visited.Clear();
                 }
 
                 return dolls;
             }
-            void Visit(Doll item, ref Dictionary<Doll, List<Doll>> visited, bool ignoreCycles)
+            void Visit(Doll item, ref Dictionary<Doll, List<Doll>> visited, int numDolls)
             {
-                List<Doll> inProcess;
-                var alreadyVisited = visited.TryGetValue(item, out inProcess);
-
-                if (alreadyVisited)
-                {
-                    if (inProcess.Count != 0)
-                    {
-                        if (!inProcess.Contains(item) && inProcess.Count < _numDolls)
-                        {
-                            inProcess.Insert(0, item);
-                        }
-
-
-                    }
-                }
-                else
+                if (!visited.ContainsKey(item) && numDolls > 0)
                 {
                     visited[item] = new List<Doll> { item };
-                    var dependencies = item.Children;
-                    if (dependencies != null)
+                    var dependencies = new List<Doll>(item.Children);
+                    if (dependencies.Count != 0)
                     {
+                        Dictionary<Doll, List<Doll>> children = new Dictionary<Doll, List<Doll>>(_equalityComparer);
                         foreach (var dependency in dependencies)
                         {
-                            Visit(dependency, ref visited, ignoreCycles);
-                            var temp = visited[item];
-                            visited[item].AddRange(visited[dependency]);
-                            if (visited[item].Count > _numDolls)
-                            {
-                                visited[item] = temp;
-                            }
-                            visited.Remove(dependency);
+
+                            Visit(dependency, ref visited, numDolls - 1);
+                            if (visited.ContainsKey(dependency))
+                                children[dependency] = visited[dependency];
                         }
+                        var keys = new List<Doll>(children.Keys);
+                        foreach (var key in keys)
+                        {
+                            if (children[key].Count == numDolls - 1)
+                            {
+                                visited[item].AddRange(children[key]);
+                                break;
+                            }
+                        }
+
 
                     }
 
