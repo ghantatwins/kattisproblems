@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27428.2015
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RussianDolls.Kattis.Com", "RussianDolls.Kattis.Com\RussianDolls.Kattis.Com.csproj", "{35DFACA0-3C5C-47E9-9BA0-973794AE387A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RussianDolls.Kattis.Com", "RussianDolls.Kattis.Com\RussianDolls.Kattis.Com.csproj", "{35DFACA0-3C5C-47E9-9BA0-973794AE387A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Probelms.Kattis.Com", "Probelms.Kattis.Com\Probelms.Kattis.Com.csproj", "{6BB0C194-DA6E-45C0-9C84-99DC131397B1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Probelms.Kattis.Com", "Probelms.Kattis.Com\Probelms.Kattis.Com.csproj", "{6BB0C194-DA6E-45C0-9C84-99DC131397B1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Terminal.Katttis.Com", "Terminal.Katttis.Com\Terminal.Katttis.Com.csproj", "{9E33EF55-5B3E-4772-8654-D766F7EA94CA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Terminal.Katttis.Com", "Terminal.Katttis.Com\Terminal.Katttis.Com.csproj", "{9E33EF55-5B3E-4772-8654-D766F7EA94CA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

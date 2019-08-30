@@ -439,35 +439,61 @@ namespace Terminal.Katttis.Com
             }
 
 
-            IList<List<Doll>> Sort(IEnumerable<Doll> source, int numDolls)
+            IList<List<Doll>> Sort(IEnumerable<Doll> actual, int numDolls)
             {
-
+                List<Doll> source= new List<Doll>(actual);
                 var visited = new Dictionary<Doll, List<Doll>>(_equalityComparer);
                 List<List<Doll>> dolls = new List<List<Doll>>();
-                foreach (var item in source)
+                var listComparer = new ListEqualityComparer(_equalityComparer);
+                for(int i=0;i<source.Count;)
                 {
-                    Visit(item, ref visited, numDolls);
-                    if (visited[item].Count == numDolls)
+                    
+                    Visit(source[i], ref visited, numDolls);
+                    var temp = visited[source[i]];
+                    if (visited[source[i]].Count == numDolls)
                     {
                         if (dolls.Count == 0)
-                            dolls.Add(new List<Doll>(visited[item]));
+                        {
+                            dolls.Add(new List<Doll>(temp));
+                            visited.Clear();
+                            visited[source[i]] = temp;
+                            source.Remove(source[i]);
+                        }
                         else
                         {
+                           List<Doll> innerTemp=new List<Doll>();
                             foreach (var doll in dolls)
                             {
-                                if (!doll.Intersect(visited[item]).Any())
+                                if (!dolls.Contains(temp, listComparer) && doll.Count == numDolls)
                                 {
-                                    dolls.Add(new List<Doll>(visited[item]));
+                                    if (!doll.Intersect(temp, _equalityComparer).Any())
+                                    {
+                                        innerTemp.AddRange(temp);
+                                        break;
+                                    }
+                                    
 
-                                    break;
 
                                 }
 
                             }
+
+                            
+                            if (innerTemp.Count != 0)
+                            {
+                                dolls.Add(new List<Doll>(innerTemp));
+                            }
+                            else
+                            {
+                                visited.Clear();
+                                visited[source[i]] = temp;
+                            }
+                            source.Remove(source[i]);
                         }
                     }
+                    else i++;
 
-                    visited.Clear();
+
                 }
 
                 return dolls;
@@ -478,6 +504,7 @@ namespace Terminal.Katttis.Com
                 {
                     visited[item] = new List<Doll> { item };
                     var dependencies = new List<Doll>(item.Children);
+                    dependencies.Sort(_comparer);
                     if (dependencies.Count != 0)
                     {
                         Dictionary<Doll, List<Doll>> children = new Dictionary<Doll, List<Doll>>(_equalityComparer);
@@ -485,24 +512,16 @@ namespace Terminal.Katttis.Com
                         {
 
                             Visit(dependency, ref visited, numDolls - 1);
-                            if (visited.ContainsKey(dependency))
+                            if (visited.ContainsKey(dependency) && visited[dependency].Count == numDolls - 1)
                                 children[dependency] = visited[dependency];
                         }
-                        var keys = new List<Doll>(children.Keys);
-                        foreach (var key in keys)
+                        if (children.Keys.Count != 0)
                         {
-                            if (children[key].Count == numDolls - 1)
-                            {
-                                visited[item].AddRange(children[key]);
-                                break;
-                            }
+                            visited[item].AddRange(children[children.Keys.First()]);
                         }
-
-
+                        
                     }
-
-
-
+                    
                 }
             }
 
@@ -537,14 +556,14 @@ namespace Terminal.Katttis.Com
         {
             static void Main(string[] args)
             {
-#if DEBUG
+//#if DEBUG
                 ConsoleWorker worker = CreateTestScanner();
                 worker.DoWork();
                 Console.ReadKey();
-#else
-                ConsoleWorker worker = CreateScanner();
-                worker.DoWork();
-#endif
+//#else
+//                ConsoleWorker worker = CreateScanner();
+//                worker.DoWork();
+//#endif
 
             }
 
@@ -578,6 +597,31 @@ namespace Terminal.Katttis.Com
             {
                 return new Problem(new Scanner());
             }
+        }
+    }
+}
+
+namespace Terminal.Katttis.Com.Terminal
+{
+    internal class ListEqualityComparer : IEqualityComparer<List<Problem.Doll>>
+    {
+        private readonly IEqualityComparer<Problem.Doll> _dollComparer;
+
+        public ListEqualityComparer(IEqualityComparer<Problem.Doll> dollComparer)
+        {
+            _dollComparer = dollComparer;
+        }
+        public bool Equals(List<Problem.Doll> x, List<Problem.Doll> y)
+        {
+            if (x == y) return true;
+            if (x == null) return false;
+            if (y == null) return false;
+            return y.SequenceEqual(x, _dollComparer);
+        }
+
+        public int GetHashCode(List<Problem.Doll> obj)
+        {
+            throw new NotImplementedException();
         }
     }
 }
